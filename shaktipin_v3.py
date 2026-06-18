@@ -178,7 +178,7 @@ def process_commands():
                     execute_event_pipeline("REQUEST_INFO", c)
                 elif cmd_type == "REQUEST_AUDIO":
                     if c["variant"] == "Shaktipin Pro":
-                        execute_event_pipeline("REQUEST_AUDIO", c)
+                        execute_event_pipeline("REQUEST_AUDIO", c, sample=cmd.get("sample"))
                     else:
                         log("Remote command ignored: REQUEST_AUDIO requires Pro device", did)
                 elif cmd_type == "LIVE_TRACKING":
@@ -305,6 +305,51 @@ def run_edge_ai(event_type: str) -> dict:
     }
 
 
+def run_yamnet_processing(sample: str) -> dict:
+    sample_key = sample.lower()
+    if "traffic" in sample_key:
+        keyword = "traffic"
+        predictions = [("traffic", 0.75), ("horn", 0.15), ("engine", 0.07), ("wind", 0.03)]
+        distress_score = random.randint(10, 25)
+    elif "barking" in sample_key or "animal" in sample_key:
+        keyword = "barking"
+        predictions = [("barking", 0.70), ("growling", 0.16), ("footsteps", 0.09), ("wind", 0.05)]
+        distress_score = random.randint(30, 50)
+    elif "crying" in sample_key or "child" in sample_key:
+        keyword = "crying"
+        predictions = [("crying", 0.80), ("screaming", 0.12), ("speech", 0.05), ("silence", 0.03)]
+        distress_score = random.randint(72, 95)
+    else:
+        keyword = "silence"
+        predictions = [("silence", 0.93), ("background hum", 0.05), ("whispering", 0.02)]
+        distress_score = random.randint(0, 10)
+
+    if "yamnet_placeholder" in st.session_state and st.session_state.yamnet_placeholder is not None:
+        p_holder = st.session_state.yamnet_placeholder
+    else:
+        p_holder = st.empty()
+
+    with p_holder.status("YAMNet Audio Processing Active", expanded=True) as status:
+        st.write("Extracting log-mel spectrogram features (100 frames, 64 bands)...")
+        time.sleep(0.8)
+        st.write("Feeding feature tensors into MobileNet YAMNet core...")
+        time.sleep(0.8)
+        st.write("Evaluating AudioSet class predictions:")
+        for name, conf in predictions:
+            st.write(f"- {name}: {int(conf * 100)}%")
+            st.progress(conf)
+        time.sleep(0.8)
+        st.write(f"Classification completed! Primary Keyword: **{keyword}**")
+        status.update(label="YAMNet Analysis Complete", state="complete", expanded=True)
+
+    return {
+        "keyword": keyword,
+        "confidence": predictions[0][1],
+        "distress_score": distress_score,
+        "distress_detected": distress_score > 50,
+    }
+
+
 def distress_label(score: int):
     if score <= 20:
         return "NORMAL", "#00e676"
@@ -407,7 +452,7 @@ def drain_battery(device_id: str, amount=0.4):
 # 4. EVENT PIPELINE  (Event Manager -> GPS -> BMI270 -> Audio AI -> AES -> Gateway -> Parent)
 # ==============================================================================
 
-def execute_event_pipeline(event_type: str, child: dict) -> dict:
+def execute_event_pipeline(event_type: str, child: dict, sample=None) -> dict:
     device_id = child["device_id"]
     ts = datetime.now()
 
@@ -419,7 +464,11 @@ def execute_event_pipeline(event_type: str, child: dict) -> dict:
         audio_id = capture_audio(device_id)
         log(f"Audio Stored on microSD ({audio_id}.wav)", device_id)
 
-        ai = run_edge_ai(event_type)
+        if event_type == "REQUEST_AUDIO":
+            chosen_sample = sample or random.choice(["Traffic Situation", "Animal Barking", "Child Crying", "Pin Drop Silence"])
+            ai = run_yamnet_processing(chosen_sample)
+        else:
+            ai = run_edge_ai(event_type)
         log("Edge AI Completed", device_id)
     else:
         log("Audio processing bypassed (non-Pro device)", device_id)
@@ -1047,8 +1096,14 @@ def main():
         with b4:
             is_pro = (selected_child.get("variant") == "Shaktipin Pro")
             if is_pro:
+                audio_sample = st.selectbox(
+                    "Select Audio Sample",
+                    options=["Traffic Situation", "Animal Barking", "Child Crying", "Pin Drop Silence"],
+                    key=f"audio_sample_{selected_device}",
+                    label_visibility="collapsed"
+                )
                 if st.button("REQUEST AUDIO", width="stretch"):
-                    execute_event_pipeline("REQUEST_AUDIO", selected_child)
+                    execute_event_pipeline("REQUEST_AUDIO", selected_child, sample=audio_sample)
                     st.rerun()
             else:
                 st.button("REQUEST AUDIO (Pro Only)", width="stretch", disabled=True, help="Audio features require Shaktipin Pro variant.")
@@ -1057,6 +1112,7 @@ def main():
                 execute_event_pipeline("DEVICE_HEALTH", selected_child)
                 st.rerun()
 
+        st.session_state.yamnet_placeholder = st.empty()
         st.markdown("---")
         st.markdown("##### MOST RECENT PACKET")
         device_packets = [p for p in st.session_state.packets if p["device_id"] == selected_device]

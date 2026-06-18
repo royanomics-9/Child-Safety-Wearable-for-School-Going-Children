@@ -55,13 +55,14 @@ def clear_commands(device_id):
     db["commands"] = [c for c in db.get("commands", []) if not (c["device_id"] == device_id and not c.get("processed", False))]
     save_db(db)
 
-def add_command(device_id, command_type):
+def add_command(device_id, command_type, sample=None):
     db = load_db()
     if "commands" not in db:
         db["commands"] = []
     db["commands"].append({
         "device_id": device_id,
         "command": command_type,
+        "sample": sample,
         "timestamp": datetime.now().isoformat(),
         "processed": False
     })

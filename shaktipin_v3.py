@@ -598,7 +598,7 @@ def get_css(theme: str) -> str:
 .stApp{{ background-color:var(--bg-app); }}
 section[data-testid="stSidebar"]{{ background-color:var(--bg-panel); border-right:1px solid var(--border); }}
 div[data-testid="stHeader"]{{ background-color:rgba(0,0,0,0); }}
-h1,h2,h3,h4,h5,h6,p,span,div,label{{ color:var(--text-hi); }}
+h1,h2,h3,h4,h5,h6,p{{ color:var(--text-hi); }}
 .block-container{{ padding-top:1.2rem; }}
 
 .ops-banner{{
@@ -764,7 +764,7 @@ def main():
     # ---------------------------------------------------------------- HEADER
     st.markdown(
         '<div class="ops-banner">'
-        '<div class="ops-title">🛡️ SHAKTIPIN V3 &nbsp;|&nbsp; INCIDENT RESPONSE CONSOLE</div>'
+        '<div class="ops-title">SHAKTIPIN V3 &nbsp;|&nbsp; INCIDENT RESPONSE CONSOLE</div>'
         '<div class="ops-subtitle">CHILD SAFETY EMERGENCY OPERATIONS CENTER &middot; COMMAND &amp; CONTROL SOFTWARE</div>'
         '<div class="ops-disclaimer">SIMULATION ONLY &mdash; all sensor data, audio metadata, GPS positions, '
         'and police/help-centre directories on this console are synthetically generated for demonstration. '
@@ -794,7 +794,7 @@ def main():
 
         st.markdown("---")
         st.markdown("#### OPERATIONS THEME")
-        is_light = st.toggle("☀️ Light Tactical Mode", value=(st.session_state.theme == "Light"))
+        is_light = st.toggle("Light Tactical Mode", value=(st.session_state.theme == "Light"))
         new_theme = "Light" if is_light else "Dark"
         if new_theme != st.session_state.theme:
             st.session_state.theme = new_theme
@@ -815,7 +815,7 @@ def main():
         st.session_state.refresh_seconds = st.slider("Refresh interval (sec)", 2, 30, st.session_state.refresh_seconds)
 
         st.markdown("---")
-        if st.button("⟲ RESET CONSOLE", width="stretch"):
+        if st.button("RESET CONSOLE", width="stretch"):
             st.session_state.clear()
             st.rerun()
 
@@ -913,11 +913,11 @@ def main():
                 
                 # Button to select device
                 if not is_active:
-                    if st.button("🎯 Focus Device", key=f"focus_overview_{did}", use_container_width=True):
+                    if st.button("Focus Device", key=f"focus_overview_{did}", use_container_width=True):
                         st.session_state.selected_child_name = c["name"]
                         st.rerun()
                 else:
-                    st.button("🌟 Selected", key=f"focus_overview_{did}", disabled=True, use_container_width=True)
+                    st.button("Selected", key=f"focus_overview_{did}", disabled=True, use_container_width=True)
 
         st.markdown("##### NETWORK EMULATOR")
         nm = network_metrics()
@@ -956,27 +956,27 @@ def main():
 
         b1, b2, b3, b4, b5 = st.columns(5)
         with b1:
-            if st.button("🚨 SOS BUTTON", width="stretch"):
+            if st.button("SOS BUTTON", width="stretch"):
                 execute_event_pipeline("SOS", selected_child)
                 st.rerun()
         with b2:
-            if st.button("⚠ FALL DETECTION", width="stretch"):
+            if st.button("FALL DETECTION", width="stretch"):
                 execute_event_pipeline("FALL_DETECTION", selected_child)
                 st.rerun()
         with b3:
-            if st.button("ℹ REQUEST INFO", width="stretch"):
+            if st.button("REQUEST INFO", width="stretch"):
                 execute_event_pipeline("REQUEST_INFO", selected_child)
                 st.rerun()
         with b4:
             is_pro = (selected_child.get("variant") == "Shaktipin Pro")
             if is_pro:
-                if st.button("🎙 REQUEST AUDIO", width="stretch"):
+                if st.button("REQUEST AUDIO", width="stretch"):
                     execute_event_pipeline("REQUEST_AUDIO", selected_child)
                     st.rerun()
             else:
-                st.button("🎙 REQUEST AUDIO (Pro Only)", width="stretch", disabled=True, help="Audio features require Shaktipin Pro variant.")
+                st.button("REQUEST AUDIO (Pro Only)", width="stretch", disabled=True, help="Audio features require Shaktipin Pro variant.")
         with b5:
-            if st.button("🩺 DEVICE HEALTH", width="stretch"):
+            if st.button("DEVICE HEALTH", width="stretch"):
                 execute_event_pipeline("DEVICE_HEALTH", selected_child)
                 st.rerun()
 

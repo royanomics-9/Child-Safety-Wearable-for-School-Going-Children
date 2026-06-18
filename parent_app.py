@@ -59,7 +59,7 @@ section[data-testid="stSidebar"] {{
     border-right: 1px solid var(--border);
 }}
 
-h1,h2,h3,h4,h5,h6,p,span,div,label {{
+h1,h2,h3,h4,h5,h6,p {{
     color: var(--text-hi);
 }}
 
@@ -284,7 +284,7 @@ def main():
     # Header Banner
     st.markdown(
         '<div class="parent-banner">'
-        '<div class="parent-title">🛡️ SHAKTIPIN &nbsp;|&nbsp; PARENT PORTAL</div>'
+        '<div class="parent-title">SHAKTIPIN &nbsp;|&nbsp; PARENT PORTAL</div>'
         '<div class="parent-subtitle">SECURE COMPANION APP FOR CHILD WEARABLES</div>'
         '</div>', unsafe_allow_html=True
     )
@@ -313,7 +313,7 @@ def main():
 
         st.markdown("---")
         st.markdown("#### APP THEME")
-        is_light = st.toggle("☀️ Light Tactical Mode", value=(st.session_state.theme == "Light"))
+        is_light = st.toggle("Light Tactical Mode", value=(st.session_state.theme == "Light"))
         new_theme = "Light" if is_light else "Dark"
         if new_theme != st.session_state.theme:
             st.session_state.theme = new_theme
@@ -322,7 +322,7 @@ def main():
             st.rerun()
 
         st.markdown("---")
-        if st.button("⟲ REFRESH STATE", use_container_width=True):
+        if st.button("REFRESH STATE", use_container_width=True):
             st.rerun()
 
     # ============================================================= ALERT BANNER
@@ -372,7 +372,7 @@ def main():
 
     # ===================================================================== TABS
     tab_home, tab_track, tab_security, tab_actions = st.tabs([
-        "🏠 DEVICE STATUS", "📍 GEOSPATIAL LIVE TRACKING", "🔐 AES-128-GCM DECRYPTION LAB", "⚡ COMMAND CENTER"
+        "DEVICE STATUS", "GEOSPATIAL LIVE TRACKING", "AES-128-GCM DECRYPTION LAB", "COMMAND CENTER"
     ])
 
     # ================================================================== HOME TAB
@@ -563,7 +563,7 @@ def main():
                     unsafe_allow_html=True
                 )
                 
-                decrypt_clicked = st.button("🔓 DECRYPT & VERIFY PAYLOAD", use_container_width=True)
+                decrypt_clicked = st.button("DECRYPT & VERIFY PAYLOAD", use_container_width=True)
                 
             with col_dec:
                 st.markdown("**2. Decrypted Output**")
@@ -580,7 +580,7 @@ def main():
                         plaintext = aesgcm.decrypt(nonce, ciphertext + tag, None)
                         decrypted_payload = json.loads(plaintext.decode())
                         
-                        st.markdown("<div class='verified-badge'>✅ AES-GCM INTEGRITY CHECK VERIFIED</div>", unsafe_allow_html=True)
+                        st.markdown("<div class='verified-badge'>AES-GCM INTEGRITY CHECK VERIFIED</div>", unsafe_allow_html=True)
                         st.markdown("<div class='decryption-title' style='margin-top:12px;'>Decrypted Parent Payload (v7)</div>", unsafe_allow_html=True)
                         st.json(decrypted_payload)
                     except Exception as e:
@@ -603,7 +603,7 @@ def main():
                 f'</div>',
                 unsafe_allow_html=True
             )
-            if st.button("ℹ Request Location & Status", use_container_width=True):
+            if st.button("Request Location & Status", use_container_width=True):
                 db_helper.add_command(selected_device, "REQUEST_INFO")
                 st.success("Command queued: REQUEST_INFO")
                 st.toast("Command queued!")
@@ -616,12 +616,12 @@ def main():
                 f'</div>',
                 unsafe_allow_html=True
             )
-            if st.button("🎙 Request Audio Clip", use_container_width=True, disabled=not is_pro):
+            if st.button("Request Audio Clip", use_container_width=True, disabled=not is_pro):
                 db_helper.add_command(selected_device, "REQUEST_AUDIO")
                 st.success("Command queued: REQUEST_AUDIO")
                 st.toast("Command queued!")
             if not is_pro:
-                st.caption("🎙 Request Audio requires **Shaktipin Pro** model.")
+                st.caption("Request Audio requires Shaktipin Pro model.")
                 
         with c_act3:
             st.markdown(
@@ -631,7 +631,7 @@ def main():
                 f'</div>',
                 unsafe_allow_html=True
             )
-            if st.button("📍 Start Live Tracking", use_container_width=True):
+            if st.button("Start Live Tracking", use_container_width=True):
                 db_helper.add_command(selected_device, "LIVE_TRACKING")
                 st.success("Command queued: LIVE_TRACKING")
                 st.toast("Command queued!")

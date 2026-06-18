@@ -1072,7 +1072,8 @@ def main():
                     pdk.Deck(
                         layers=[path_layer, scatter_layer],
                         initial_view_state=view_state,
-                        map_style="https://basemaps.cartocdn.com/gl/dark-matter-gl/style.json" if st.session_state.theme == "Dark" else "https://basemaps.cartocdn.com/gl/positron-gl/style.json",
+                        map_provider="carto",
+                        map_style="dark" if st.session_state.theme == "Dark" else "light",
                         tooltip={
                             "html": "<b>Time:</b> {timestamp}<br/><b>Distress Score:</b> {distress_score}<br/><b>Fall Detected:</b> {fall_detected}",
                             "style": {

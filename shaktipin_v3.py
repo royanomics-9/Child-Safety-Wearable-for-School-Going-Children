@@ -595,10 +595,86 @@ def get_css(theme: str) -> str:
 :root{{
   {root_vars}
 }}
-.stApp{{ background-color:var(--bg-app); }}
-section[data-testid="stSidebar"]{{ background-color:var(--bg-panel); border-right:1px solid var(--border); }}
-div[data-testid="stHeader"]{{ background-color:rgba(0,0,0,0); }}
-h1,h2,h3,h4,h5,h6,p{{ color:var(--text-hi); }}
+.stApp{{ background-color:var(--bg-app) !important; }}
+
+div.stApp {{
+    --primary-color: var(--cyan);
+    --background-color: var(--bg-app);
+    --secondary-background-color: var(--bg-panel);
+    --text-color: var(--text-hi);
+}}
+
+section[data-testid="stSidebar"]{{
+    background-color:var(--bg-panel) !important;
+    border-right:1px solid var(--border) !important;
+}}
+
+section[data-testid="stSidebar"] * {{
+    color: var(--text-hi) !important;
+}}
+
+h1, h2, h3, h4, h5, h6, p, li, span, a, label {{
+    color: var(--text-hi) !important;
+}}
+
+div[data-baseweb="select"] > div {{
+    background-color: var(--bg-panel) !important;
+    border: 1px solid var(--border) !important;
+}}
+
+div[data-baseweb="select"] * {{
+    color: var(--text-hi) !important;
+}}
+
+div[role="listbox"], div[role="listbox"] * {{
+    background-color: var(--bg-panel) !important;
+    color: var(--text-hi) !important;
+}}
+
+div[role="option"]:hover {{
+    background-color: var(--border-soft) !important;
+    color: var(--cyan) !important;
+}}
+
+div[data-testid="stMetric"] {{
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+}}
+
+div[data-testid="stMetricValue"] > div {{
+    color: var(--text-hi) !important;
+}}
+
+div[data-testid="stMetricLabel"] > div {{
+    color: var(--text-lo) !important;
+}}
+
+div[data-testid="stTable"] td, div[data-testid="stTable"] th {{
+    color: var(--text-hi) !important;
+    background-color: var(--bg-card) !important;
+    border-bottom: 1px solid var(--border) !important;
+}}
+
+div[data-testid="stDataFrame"] * {{
+    color: var(--text-hi) !important;
+}}
+
+button[data-testid="stBaseButton-secondary"], button[data-testid="stBaseButton-primary"] {{
+    background-color: var(--bg-panel) !important;
+    color: var(--text-hi) !important;
+    border: 1px solid var(--border) !important;
+}}
+
+button[data-testid="stBaseButton-secondary"]:hover, button[data-testid="stBaseButton-primary"]:hover {{
+    border-color: var(--cyan) !important;
+    color: var(--cyan) !important;
+    background-color: var(--border-soft) !important;
+}}
+
+div[data-testid="stCheckbox"] *, div[data-testid="stToggle"] *, div[data-testid="stSlider"] * {{
+    color: var(--text-hi) !important;
+}}
+
 .block-container{{ padding-top:1.2rem; }}
 
 .ops-banner{{

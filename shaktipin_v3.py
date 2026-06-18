@@ -310,12 +310,8 @@ def run_yamnet_processing(sample: str) -> dict:
     sample_key = sample.lower()
     if "traffic" in sample_key:
         keyword = "traffic"
-        predictions = [("traffic", 0.75), ("horn", 0.15), ("engine", 0.07), ("wind", 0.03)]
-        distress_score = random.randint(10, 25)
-    elif "barking" in sample_key or "animal" in sample_key:
-        keyword = "barking"
-        predictions = [("barking", 0.70), ("growling", 0.16), ("footsteps", 0.09), ("wind", 0.05)]
-        distress_score = random.randint(30, 50)
+        predictions = [("siren", 0.70), ("traffic", 0.20), ("engine", 0.06), ("horn", 0.04)]
+        distress_score = random.randint(35, 55)
     elif "crying" in sample_key or "child" in sample_key:
         keyword = "crying"
         predictions = [("crying", 0.80), ("screaming", 0.12), ("speech", 0.05), ("silence", 0.03)]
@@ -466,7 +462,7 @@ def execute_event_pipeline(event_type: str, child: dict, sample=None) -> dict:
         log(f"Audio Stored on microSD ({audio_id}.wav)", device_id)
 
         if event_type == "REQUEST_AUDIO":
-            chosen_sample = sample or random.choice(["Traffic Situation", "Animal Barking", "Child Crying", "Pin Drop Silence"])
+            chosen_sample = sample or random.choice(["Traffic Situation", "Child Crying", "Pin Drop Silence"])
             ai = run_yamnet_processing(chosen_sample)
         else:
             ai = run_edge_ai(event_type)
@@ -1114,7 +1110,7 @@ def main():
             with c_audio_select:
                 audio_sample = st.selectbox(
                     "Select Audio Sample to Capture",
-                    options=["Traffic Situation", "Animal Barking", "Child Crying", "Pin Drop Silence"],
+                    options=["Traffic Situation", "Child Crying", "Pin Drop Silence"],
                     key="selected_sample_option"
                 )
                 if st.button("Audio Processing", type="primary", use_container_width=True):
@@ -1123,15 +1119,14 @@ def main():
                     st.rerun()
             with c_audio_play:
                 sample_files = {
-                    "Traffic Situation": "audio_samples/traffic.wav",
-                    "Animal Barking": "audio_samples/barking.wav",
-                    "Child Crying": "audio_samples/crying.wav",
-                    "Pin Drop Silence": "audio_samples/silence.wav"
+                    "Traffic Situation": "audio_samples/freesound_community-police-car-siren-in-traffic-14655.mp3",
+                    "Child Crying": "audio_samples/freesound_community-child-crying-in-yard-72009.mp3",
+                    "Pin Drop Silence": "audio_samples/freesound_community-comedic-silence-90574.mp3"
                 }
-                wav_path = sample_files.get(audio_sample)
-                if wav_path and os.path.exists(wav_path):
+                mp3_path = sample_files.get(audio_sample)
+                if mp3_path and os.path.exists(mp3_path):
                     st.caption(f"Listen to raw 10s audio data ({audio_sample}):")
-                    st.audio(wav_path, format="audio/wav")
+                    st.audio(mp3_path, format="audio/mp3")
                 else:
                     st.error("Audio sample file not found.")
 

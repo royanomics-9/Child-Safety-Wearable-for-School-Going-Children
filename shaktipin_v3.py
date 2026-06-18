@@ -664,23 +664,30 @@ def main():
 
     # ---------------------------------------------------------------- SIDEBAR
     with st.sidebar:
+        st.markdown("#### CHILD REGISTRY  <span style='font-size:0.7rem;color:#8a96a8;'>(fixed)</span>", unsafe_allow_html=True)
+        reg_rows = []
+        for c in CHILD_REGISTRY:
+            reg_rows.append({
+                "Name": c["name"], "Device ID": c["device_id"], "Variant": c["variant"],
+                "Age": c["age"], "Battery %": st.session_state.battery[c["device_id"]],
+            })
+        st.dataframe(pd.DataFrame(reg_rows), hide_index=True, width="stretch", height=232)
+
+        st.markdown("---")
+        st.markdown("#### ACTIVE DEVICE")
+        st.session_state.selected_child_name = st.selectbox(
+            "Select child / device for actions", [c["name"] for c in CHILD_REGISTRY],
+            index=[c["name"] for c in CHILD_REGISTRY].index(st.session_state.selected_child_name),
+            label_visibility="collapsed",
+        )
+
+        st.markdown("---")
         st.markdown("#### OPERATIONS THEME")
         is_light = st.toggle("☀️ Light Tactical Mode", value=(st.session_state.theme == "Light"))
         new_theme = "Light" if is_light else "Dark"
         if new_theme != st.session_state.theme:
             st.session_state.theme = new_theme
             st.rerun()
-
-        st.markdown("---")
-        st.markdown("#### SELECT ACTIVE DEVICE")
-        for c in CHILD_REGISTRY:
-            did = c["device_id"]
-            is_active = (c["name"] == st.session_state.selected_child_name)
-            variant_badge = "Pro" if "Pro" in c["variant"] else "Base"
-            btn_label = f"{c['name']} ({did}) [{variant_badge}] (Active)" if is_active else f"{c['name']} ({did}) [{variant_badge}]"
-            if st.button(btn_label, key=f"select_sidebar_{did}", use_container_width=True):
-                st.session_state.selected_child_name = c["name"]
-                st.rerun()
 
         st.markdown("---")
         st.markdown("#### HEARTBEAT ENGINE")
@@ -1065,7 +1072,7 @@ def main():
                     pdk.Deck(
                         layers=[path_layer, scatter_layer],
                         initial_view_state=view_state,
-                        map_style="mapbox://styles/mapbox/dark-v9" if st.session_state.theme == "Dark" else "mapbox://styles/mapbox/light-v9",
+                        map_style="https://basemaps.cartocdn.com/gl/dark-matter-gl/style.json" if st.session_state.theme == "Dark" else "https://basemaps.cartocdn.com/gl/positron-gl/style.json",
                         tooltip={
                             "html": "<b>Time:</b> {timestamp}<br/><b>Distress Score:</b> {distress_score}<br/><b>Fall Detected:</b> {fall_detected}",
                             "style": {

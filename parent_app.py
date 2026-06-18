@@ -345,9 +345,8 @@ def main():
     )
     
     # Initialize DB & session state theme
-    db = db_helper.load_db()
     if "theme" not in st.session_state:
-        st.session_state.theme = db.get("theme", "Dark")
+        st.session_state.theme = "Dark"
         
     st.markdown(get_browser_css(st.session_state.theme), unsafe_allow_html=True)
     
@@ -387,8 +386,6 @@ def main():
         new_theme = "Light" if is_light else "Dark"
         if new_theme != st.session_state.theme:
             st.session_state.theme = new_theme
-            db["theme"] = new_theme
-            db_helper.save_db(db)
             st.rerun()
 
         st.markdown("---")

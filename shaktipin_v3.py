@@ -141,7 +141,7 @@ def sync_from_db():
                     
     for k in ["event_log", "packets", "audio_counter", "microsd", "battery", 
               "last_contact", "device_position", "incidents", "last_heartbeat", 
-              "tracking_sessions", "theme"]:
+              "tracking_sessions"]:
         if k in db:
             if isinstance(st.session_state.get(k), dict) and isinstance(db[k], dict):
                 for sub_k, sub_v in db[k].items():
@@ -162,7 +162,6 @@ def sync_to_db():
         "incidents": st.session_state.incidents,
         "last_heartbeat": st.session_state.last_heartbeat,
         "tracking_sessions": st.session_state.tracking_sessions,
-        "theme": st.session_state.theme,
     })
     db_helper.save_db(db)
 
@@ -214,7 +213,9 @@ def init_state():
     import copy
     for k, v in defaults.items():
         if k not in st.session_state:
-            if k in db:
+            if k == "theme":
+                st.session_state[k] = v
+            elif k in db:
                 if isinstance(v, dict) and isinstance(db[k], dict):
                     st.session_state[k] = copy.deepcopy(v)
                     for sub_k, sub_v in db[k].items():

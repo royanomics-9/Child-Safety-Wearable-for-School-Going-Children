@@ -208,6 +208,7 @@ def init_state():
         "auto_refresh": True,          # Set default auto-refresh to True for responsive commands!
         "refresh_seconds": 3,
         "theme": "Dark",
+        "audio_request_active": False,
     }
     
     import copy
@@ -1096,14 +1097,8 @@ def main():
         with b4:
             is_pro = (selected_child.get("variant") == "Shaktipin Pro")
             if is_pro:
-                audio_sample = st.selectbox(
-                    "Select Audio Sample",
-                    options=["Traffic Situation", "Animal Barking", "Child Crying", "Pin Drop Silence"],
-                    key=f"audio_sample_{selected_device}",
-                    label_visibility="collapsed"
-                )
                 if st.button("REQUEST AUDIO", width="stretch"):
-                    execute_event_pipeline("REQUEST_AUDIO", selected_child, sample=audio_sample)
+                    st.session_state.audio_request_active = True
                     st.rerun()
             else:
                 st.button("REQUEST AUDIO (Pro Only)", width="stretch", disabled=True, help="Audio features require Shaktipin Pro variant.")
@@ -1111,6 +1106,34 @@ def main():
             if st.button("DEVICE HEALTH", width="stretch"):
                 execute_event_pipeline("DEVICE_HEALTH", selected_child)
                 st.rerun()
+
+        if st.session_state.audio_request_active:
+            st.markdown("---")
+            st.markdown("##### AUDIO CAPTURE PROCESSING PANEL")
+            c_audio_select, c_audio_play = st.columns([2, 3])
+            with c_audio_select:
+                audio_sample = st.selectbox(
+                    "Select Audio Sample to Capture",
+                    options=["Traffic Situation", "Animal Barking", "Child Crying", "Pin Drop Silence"],
+                    key="selected_sample_option"
+                )
+                if st.button("Audio Processing", type="primary", use_container_width=True):
+                    st.session_state.audio_request_active = False
+                    execute_event_pipeline("REQUEST_AUDIO", selected_child, sample=audio_sample)
+                    st.rerun()
+            with c_audio_play:
+                sample_files = {
+                    "Traffic Situation": "audio_samples/traffic.wav",
+                    "Animal Barking": "audio_samples/barking.wav",
+                    "Child Crying": "audio_samples/crying.wav",
+                    "Pin Drop Silence": "audio_samples/silence.wav"
+                }
+                wav_path = sample_files.get(audio_sample)
+                if wav_path and os.path.exists(wav_path):
+                    st.caption(f"Listen to raw 10s audio data ({audio_sample}):")
+                    st.audio(wav_path, format="audio/wav")
+                else:
+                    st.error("Audio sample file not found.")
 
         st.session_state.yamnet_placeholder = st.empty()
         st.markdown("---")

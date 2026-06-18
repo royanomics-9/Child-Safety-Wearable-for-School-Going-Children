@@ -49,6 +49,7 @@ import pandas as pd
 import pydeck as pdk
 import streamlit as st
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import db_helper
 
 # ==============================================================================
 # 1. STATIC CONFIG -- CHILD REGISTRY / MOCK GATEWAY DATABASES
@@ -107,7 +108,90 @@ MICROSD_CAPACITY_MB = 512
 # 2. SESSION STATE INITIALISATION
 # ==============================================================================
 
+def parse_dt(val):
+    if isinstance(val, str):
+        try:
+            return datetime.fromisoformat(val)
+        except Exception:
+            return val
+    return val
+
+def sync_from_db():
+    db = db_helper.load_db()
+    
+    if "packets" in db:
+        for p in db["packets"]:
+            p["timestamp"] = parse_dt(p.get("timestamp"))
+            
+    if "last_contact" in db:
+        db["last_contact"] = {k: parse_dt(v) for k, v in db["last_contact"].items()}
+        
+    if "last_heartbeat" in db:
+        db["last_heartbeat"] = {k: parse_dt(v) for k, v in db["last_heartbeat"].items()}
+        
+    if "incidents" in db:
+        for did, inc in db["incidents"].items():
+            inc["updated_at"] = parse_dt(inc.get("updated_at"))
+            
+    if "tracking_sessions" in db:
+        for did, sessions in db["tracking_sessions"].items():
+            for sess in sessions:
+                for p in sess:
+                    p["timestamp"] = parse_dt(p.get("timestamp"))
+                    
+    for k in ["event_log", "packets", "audio_counter", "microsd", "battery", 
+              "last_contact", "device_position", "incidents", "last_heartbeat", 
+              "tracking_sessions", "theme"]:
+        if k in db:
+            if isinstance(st.session_state.get(k), dict) and isinstance(db[k], dict):
+                for sub_k, sub_v in db[k].items():
+                    st.session_state[k][sub_k] = sub_v
+            else:
+                st.session_state[k] = db[k]
+
+def sync_to_db():
+    db = db_helper.load_db()
+    db.update({
+        "event_log": st.session_state.event_log,
+        "packets": st.session_state.packets,
+        "audio_counter": st.session_state.audio_counter,
+        "microsd": st.session_state.microsd,
+        "battery": st.session_state.battery,
+        "last_contact": st.session_state.last_contact,
+        "device_position": st.session_state.device_position,
+        "incidents": st.session_state.incidents,
+        "last_heartbeat": st.session_state.last_heartbeat,
+        "tracking_sessions": st.session_state.tracking_sessions,
+        "theme": st.session_state.theme,
+    })
+    db_helper.save_db(db)
+
+def process_commands():
+    db = db_helper.load_db()
+    for c in CHILD_REGISTRY:
+        did = c["device_id"]
+        cmds = db_helper.get_commands(did)
+        if cmds:
+            for cmd in cmds:
+                cmd_type = cmd["command"]
+                log(f"Received Remote Command: {cmd_type}", did)
+                if cmd_type == "REQUEST_INFO":
+                    execute_event_pipeline("REQUEST_INFO", c)
+                elif cmd_type == "REQUEST_AUDIO":
+                    if c["variant"] == "Shaktipin Pro":
+                        execute_event_pipeline("REQUEST_AUDIO", c)
+                    else:
+                        log("Remote command ignored: REQUEST_AUDIO requires Pro device", did)
+                elif cmd_type == "LIVE_TRACKING":
+                    run_live_tracking(c, animate=False)
+            
+            db_helper.clear_commands(did)
+            sync_to_db()
+            st.rerun()
+
 def init_state():
+    db = db_helper.load_db()
+    
     defaults = {
         "event_log": [],
         "packets": [],                 # list of full packet-lifecycle records, newest first
@@ -122,15 +206,36 @@ def init_state():
         "tracking_sessions": {c["device_id"]: [] for c in CHILD_REGISTRY},
         "selected_child_name": CHILD_REGISTRY[0]["name"],
         "animate_tracking": False,
-        "auto_refresh": False,
-        "refresh_seconds": 5,
+        "auto_refresh": True,          # Set default auto-refresh to True for responsive commands!
+        "refresh_seconds": 3,
         "theme": "Dark",
     }
+    
+    import copy
     for k, v in defaults.items():
         if k not in st.session_state:
-            st.session_state[k] = v
+            if k in db:
+                if isinstance(v, dict) and isinstance(db[k], dict):
+                    st.session_state[k] = copy.deepcopy(v)
+                    for sub_k, sub_v in db[k].items():
+                        st.session_state[k][sub_k] = sub_v
+                else:
+                    st.session_state[k] = db[k]
+            else:
+                st.session_state[k] = v
+                
+    sync_from_db()
+    
     if "aes_key" not in st.session_state:
-        st.session_state.aes_key = AESGCM.generate_key(bit_length=128)
+        if "aes_key" in db:
+            st.session_state.aes_key = base64.b64decode(db["aes_key"])
+        else:
+            key = AESGCM.generate_key(bit_length=128)
+            st.session_state.aes_key = key
+            db["aes_key"] = base64.b64encode(key).decode()
+            db_helper.save_db(db)
+            
+    sync_to_db()
 
 
 # ==============================================================================
@@ -398,6 +503,7 @@ def execute_event_pipeline(event_type: str, child: dict) -> dict:
             "updated_at": ts,
         }
 
+    sync_to_db()
     return record
 
 
@@ -417,6 +523,7 @@ def run_live_tracking(child: dict, animate: bool):
     progress_box.empty()
     st.session_state.tracking_sessions[device_id].insert(0, session_packets)
     log("Live Tracking Session Completed", device_id)
+    sync_to_db()
 
 
 def check_heartbeats():
@@ -436,6 +543,7 @@ def check_heartbeats():
         if now - last >= interval:
             execute_event_pipeline("HEALTH_PACKET_90MIN", child)
             st.session_state.last_heartbeat[device_id] = now
+            sync_to_db()
 
 
 def next_heartbeat_due(device_id: str) -> datetime | None:
@@ -451,6 +559,7 @@ def acknowledge_incident(device_id):
         inc["status"] = "ACKNOWLEDGED"
         inc["updated_at"] = datetime.now()
         log("Incident State Update -> ACKNOWLEDGED", device_id)
+        sync_to_db()
 
 
 def escalate_incident(device_id):
@@ -459,6 +568,7 @@ def escalate_incident(device_id):
         inc["status"] = "ESCALATED"
         inc["updated_at"] = datetime.now()
         log("Escalation Workflow Initiated", device_id)
+        sync_to_db()
 
 
 # ==============================================================================
@@ -649,6 +759,7 @@ def main():
     init_state()
     st.markdown(get_css(st.session_state.theme), unsafe_allow_html=True)
     check_heartbeats()
+    process_commands()
 
     # ---------------------------------------------------------------- HEADER
     st.markdown(

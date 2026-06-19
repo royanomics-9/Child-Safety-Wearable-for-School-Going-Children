@@ -183,6 +183,8 @@ def process_commands():
                         log("Remote command ignored: REQUEST_AUDIO requires Pro device", did)
                 elif cmd_type == "LIVE_TRACKING":
                     run_live_tracking(c, animate=False)
+                elif cmd_type == "TRIGGER_BUZZER":
+                    log("Piezo Buzzer remotely triggered - buzzer is active on child device!", did)
             
             db_helper.clear_commands(did)
             sync_to_db()

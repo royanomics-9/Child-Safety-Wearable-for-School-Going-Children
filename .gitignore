@@ -1,3 +1,8 @@
 __pycache__/
 *.pyc
 shaktipin_db.json
+
+# React parent dashboard build/dependencies
+shaktipin-parent-dashboard/node_modules/
+shaktipin-parent-dashboard/dist/
+shaktipin-parent-dashboard/.DS_Store
